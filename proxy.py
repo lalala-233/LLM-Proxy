@@ -295,8 +295,8 @@ def create_app() -> web.Application:
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))
     logger.info("=" * 50)
-    logger.info(f"LLM Proxy starting → http://localhost:{port}")
-    logger.info(f"Allowed models:      {', '.join(ALLOWED_MODELS)}")
-    logger.info(f"Upstream URL:        {UPSTREAM_URL}")
+    logger.info(f"LLM Proxy starting:   http://localhost:{port}")
+    logger.info(f"Allowed models:       {', '.join(ALLOWED_MODELS)}")
+    logger.info(f"Upstream URL:         {UPSTREAM_URL}")
     logger.info("=" * 50)
     web.run_app(create_app(), host="0.0.0.0", port=port)

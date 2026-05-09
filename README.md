@@ -48,8 +48,8 @@ On every request the proxy:
 2. **Rewrites**: the request body to set `stream: true` and `enable_thinking: false`.
 3. **Forwards**: optional parameters (`temperature`, `max_tokens`, `top_p`, etc.) unchanged.
 4. **Responds** based on the client's original `stream` value:
-   - **Client requested stream=true** → upstream SSE is forwarded as-is.
-   - **Client requested stream=false** (or omitted it) → chunks are collected internally and returned as a single non-streaming JSON response.
+   - **Client requested stream=true** -> upstream SSE is forwarded as-is.
+   - **Client requested stream=false** (or omitted it) -> chunks are collected internally and returned as a single non-streaming JSON response.
 
 ### Why force `enable_thinking=false` and `stream=true`?
 
@@ -64,8 +64,8 @@ Data from `compare.py` (100 requests per combination, round-robin, 16 concurrent
 
 **Main-effect analysis:**
 
-- `enable_thinking=false` → **mean 8.18s**, `enable_thinking=true` → **mean 14.05s** — **~5.9s penalty** for thinking.
-- `stream=true` → **mean 10.99s**, `stream=false` → **mean 11.24s** — negligible difference.
+- `enable_thinking=false` -> **mean 8.18s**, `enable_thinking=true` -> **mean 14.05s** — **~5.9s penalty** for thinking.
+- `stream=true` -> **mean 10.99s**, `stream=false` -> **mean 11.24s** — negligible difference.
 
 Disabling thinking cuts latency by nearly 40%.
 
