@@ -4,8 +4,7 @@ LLM Proxy — An OpenAI-compatible proxy that sits between your client
 and an upstream LLM API (default: SiliconFlow).
 
 Key behaviours:
-  - Always sends stream=true + enable_thinking=false upstream, which
-    cuts latency significantly (see bench.py / result.md for data).
+  - Always sends stream=true + enable_thinking=false upstream
   - If the client asks for stream=true, the upstream SSE is forwarded
     as-is.
   - If the client asks for stream=false (or omits stream), chunks are
@@ -64,7 +63,9 @@ def build_upstream_body(body: dict) -> dict:
     return upstream
 
 
-async def handle_chat_completions(request: web.Request) -> web.Response:
+async def handle_chat_completions(
+    request: web.Request,
+) -> web.Response | web.StreamResponse:
     # CORS preflight
     if request.method == "OPTIONS":
         return web.Response(
@@ -135,7 +136,7 @@ async def handle_chat_completions(request: web.Request) -> web.Response:
                     )
 
                 if client_wants_stream:
-                    return await passthrough_stream(resp)
+                    return await passthrough_stream(request, resp)
 
                 return await collect_and_return(resp, model)
 
@@ -150,6 +151,7 @@ async def handle_chat_completions(request: web.Request) -> web.Response:
 
 
 async def passthrough_stream(
+    request: web.Request,
     upstream_resp: aiohttp.ClientResponse,
 ) -> web.StreamResponse:
     """Forward the upstream SSE stream to the client unchanged."""
@@ -163,7 +165,7 @@ async def passthrough_stream(
             "Access-Control-Allow-Origin": "*",
         },
     )
-    await stream_resp.prepare()
+    await stream_resp.prepare(request)
 
     try:
         async for chunk in upstream_resp.content:
