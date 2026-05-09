@@ -29,11 +29,6 @@ logger = logging.getLogger(__name__)
 
 UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
 ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
-SILICONFLOW_API_KEY = os.environ.get("SILICONFLOW_API_KEY")
-
-if not SILICONFLOW_API_KEY:
-    logger.warning("⚠️ 环境变量 SILICONFLOW_API_KEY 未设置！")
-
 
 def build_upstream_body(body: dict) -> dict:
     """构造上游请求体：强制 stream=true, enable_thinking=false"""
@@ -98,7 +93,7 @@ async def handle_chat_completions(request: web.Request) -> web.Response:
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {SILICONFLOW_API_KEY}",
+        "Authorization": auth_header,
     }
 
     msg_count = len(upstream_payload.get("messages", []))
@@ -286,6 +281,5 @@ if __name__ == "__main__":
     logger.info(f"启动代理服务器 → http://localhost:{port}")
     logger.info(f"允许模型:       {', '.join(ALLOWED_MODELS)}")
     logger.info(f"上游地址:       {UPSTREAM_URL}")
-    logger.info(f"API Key:        {'✅ 已配置' if SILICONFLOW_API_KEY else '❌ 未配置'}")
     logger.info("=" * 50)
     web.run_app(create_app(), host="0.0.0.0", port=port)
