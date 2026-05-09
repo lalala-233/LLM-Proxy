@@ -22,7 +22,7 @@ LLM Proxy **强制上游使用** `stream=false` 和 `enable_thinking=false`，�
 
 ```bash
 # 安装依赖
-pip install -r requirements.txt
+pip install aiohttp
 
 # 启动代理（默认端口 8000）
 python proxy.py
@@ -98,6 +98,8 @@ PORT=9090 python proxy.py
 配套脚本 `compare.py` 可用于进行延迟比较。
 
 ```bash
+pip install -r requirements.txt
+
 export SILICONFLOW_API_KEY="sk-..."
 python compare.py
 ```

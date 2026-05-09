@@ -22,7 +22,7 @@ LLM Proxy **forces** `stream=true` and `enable_thinking=false` upstream, making 
 
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install aiohttp
 
 # Start the proxy (default port 8000)
 python proxy.py
@@ -98,6 +98,8 @@ PORT=9090 python proxy.py
 The companion script `compare.py` can be used for latency comparison.
 
 ```bash
+pip install -r requirements.txt
+
 export SILICONFLOW_API_KEY="sk-..."
 python compare.py
 ```

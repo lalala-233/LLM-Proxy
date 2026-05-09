@@ -1,0 +1,6 @@
+# proxy.py
+aiohttp
+
+# compare.py
+requests
+urllib3
