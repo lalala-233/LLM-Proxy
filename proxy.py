@@ -66,7 +66,7 @@ def build_upstream_body(body: dict) -> dict:
 
 async def handle_chat_completions(
     request: web.Request,
-) -> web.Response | web.StreamResponse:
+) -> web.StreamResponse:
     if request.method != "POST":
         return web.json_response({"error": "Method not allowed"}, status=405)
 
