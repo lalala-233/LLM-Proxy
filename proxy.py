@@ -158,8 +158,7 @@ async def passthrough_stream(
 
     try:
         async for chunk in upstream_resp.content:
-            if chunk:
-                await stream_resp.write(chunk)
+            await stream_resp.write(chunk)
     except Exception as e:
         logger.error(f"Stream passthrough error: {e}")
     finally:
