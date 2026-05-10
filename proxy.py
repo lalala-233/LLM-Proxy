@@ -127,8 +127,8 @@ async def handle_chat_completions(
 
                 if client_wants_stream:
                     return await passthrough_stream(request, resp)
-
-                return await collect_and_return(resp, model)
+                else:
+                    return await collect_and_return(resp, model)
 
     except asyncio.TimeoutError:
         logger.error("Upstream request timed out")
