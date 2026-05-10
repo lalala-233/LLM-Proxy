@@ -81,6 +81,7 @@ PORT=8080 python proxy.py
 # =============================================
 UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
 ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
+TIMEOUT = 60
 ```
 
 > **注意：** `enable_thinking` 是 SiliconFlow 的特有参数。本代理主要为 SiliconFlow 设计。若将 `UPSTREAM_URL` 改为其他提供商，请先确认对方是否支持（或会忽略）该字段——否则需从 `proxy.py` 的 `build_upstream_body()` 中移除它。

@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 # =============================================
 UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
 ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
+TIMEOUT = 60
 
 
 def build_upstream_body(body: dict) -> dict:
@@ -109,7 +110,7 @@ async def handle_chat_completions(
 
     try:
         async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=120),
+            timeout=aiohttp.ClientTimeout(total=TIMEOUT),
         ) as session:
             async with session.post(
                 UPSTREAM_URL,

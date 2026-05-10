@@ -81,6 +81,7 @@ Open `proxy.py` and look for the **Configuration** section near the top:
 # =============================================
 UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
 ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
+TIMEOUT = 60
 ```
 
 > **Note:** `enable_thinking` is a SiliconFlow-specific parameter. This proxy was designed primarily for SiliconFlow. If you change `UPSTREAM_URL` to another provider, check whether it supports (or ignores) this field — otherwise remove it from `build_upstream_body()` in `proxy.py`.
