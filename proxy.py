@@ -21,7 +21,6 @@ import json
 import logging
 import os
 import time
-from typing import Optional
 
 import asyncio
 
@@ -174,9 +173,9 @@ async def collect_and_return(
     """Collect streaming chunks and return a standard non-streaming JSON response."""
     collected_content = ""
     collected_reasoning = ""
-    finish_reason: Optional[str] = None
-    response_id: Optional[str] = None
-    model_name: Optional[str] = None
+    finish_reason: str | None = None
+    response_id: str | None = None
+    model_name: str | None = None
     chunk_count = 0
 
     while True:
