@@ -66,17 +66,6 @@ def build_upstream_body(body: dict) -> dict:
 async def handle_chat_completions(
     request: web.Request,
 ) -> web.Response | web.StreamResponse:
-    # CORS preflight
-    if request.method == "OPTIONS":
-        return web.Response(
-            status=200,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            },
-        )
-
     if request.method != "POST":
         return web.json_response({"error": "Method not allowed"}, status=405)
 
@@ -162,7 +151,6 @@ async def passthrough_stream(
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
-            "Access-Control-Allow-Origin": "*",
         },
     )
     await stream_resp.prepare(request)
@@ -269,22 +257,8 @@ async def handle_models(request: web.Request) -> web.Response:
     )
 
 
-async def cors_preflight(request: web.Request) -> web.Response:
-    return web.Response(
-        status=200,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-    )
-
-
 def create_app() -> web.Application:
     app = web.Application()
-
-    for path in ("/v1/chat/completions", "/v1/models", "/{tail:.*}"):
-        app.router.add_route("OPTIONS", path, cors_preflight)
 
     app.router.add_post("/v1/chat/completions", handle_chat_completions)
     app.router.add_get("/v1/models", handle_models)
