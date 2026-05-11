@@ -119,7 +119,7 @@ async fn handle_chat_completions(
 
     let client_wants_stream = body
         .get("stream")
-        .and_then(|v| v.as_bool())
+        .and_then(serde_json::Value::as_bool)
         .unwrap_or(false);
 
     let upstream_payload = build_upstream_body(&body);
@@ -181,13 +181,13 @@ async fn handle_chat_completions(
     }
 
     if client_wants_stream {
-        passthrough_stream(upstream_resp).await
+        passthrough_stream(upstream_resp)
     } else {
         collect_and_return(upstream_resp, model).await
     }
 }
 
-async fn passthrough_stream(upstream: reqwest::Response) -> Response {
+fn passthrough_stream(upstream: reqwest::Response) -> Response {
     let stream = upstream
         .bytes_stream()
         .map(|chunk| chunk.map_err(std::io::Error::other));
@@ -227,28 +227,23 @@ async fn collect_and_return(upstream: reqwest::Response, default_model: &str) ->
         buf.extend_from_slice(&chunk);
 
         // Process as many complete lines as possible from the buffer
-        'lines: loop {
-            // Find newline position
-            let nl_pos = match buf.iter().position(|&b| b == b'\n') {
-                Some(p) => p,
-                None => break 'lines,
-            };
-
+        // Find newline position
+        while let Some(nl_pos) = buf.iter().position(|&b| b == b'\n') {
             // Extract line (excluding the newline byte)
             let raw: Vec<u8> = buf.drain(..=nl_pos).collect();
             let line = String::from_utf8_lossy(&raw[..nl_pos]).trim().to_string();
 
             if line.is_empty() || line.starts_with(':') {
-                continue 'lines;
+                continue;
             }
             if !line.starts_with("data: ") {
-                continue 'lines;
+                continue;
             }
 
             let data_str = line[6..].trim();
             if data_str == "[DONE]" {
                 done = true;
-                break 'lines;
+                break;
             }
 
             if let Ok(chunk) = serde_json::from_str::<Value>(data_str) {
