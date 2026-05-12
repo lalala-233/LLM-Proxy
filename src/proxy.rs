@@ -3,7 +3,7 @@ use crate::error::ProxyError;
 use axum::{
     Router,
     extract::State,
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, HeaderValue, StatusCode},
     response::{IntoResponse, Json, Response},
     routing::{get, post},
 };
@@ -77,7 +77,7 @@ async fn handle_chat_completions(
         .get("model")
         .and_then(|v| v.as_str())
         .map(std::string::ToString::to_string)
-        .ok_or_else(|| ProxyError::ModelNotAllowed("(missing)".into()))?;
+        .ok_or_else(|| ProxyError::ModelNotAllowed("(missing)".to_string()))?;
 
     if !ALLOWED_MODELS.contains(&model.as_str()) {
         return Err(ProxyError::ModelNotAllowed(model));
@@ -107,13 +107,10 @@ async fn handle_chat_completions(
     );
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        "Content-Type",
-        "application/json".parse().expect("valid header value"),
-    );
+    headers.insert("Content-Type", HeaderValue::from_static("application/json"));
     headers.insert(
         "Authorization",
-        auth_header.parse().expect("valid header value"),
+        auth_header.parse().or(Err(ProxyError::Unauthorized))?,
     );
 
     let response = state
