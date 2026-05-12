@@ -40,7 +40,30 @@ async fn main() {
 
     let state = AppState { client, config };
 
-    let port = state.config.port;
+    // priority: CLI > PORT env > config
+    let mut port = state.config.port;
+
+    if let Ok(env_str) = std::env::var("PORT") {
+        match env_str.parse::<u16>() {
+            Ok(env_port) => {
+                if env_port != port {
+                    warn!("PORT env var ({env_port}) overrides config port ({port})");
+                }
+                port = env_port;
+            }
+            Err(_) => {
+                warn!("PORT env var '{env_str}' is not a valid port number, ignoring");
+            }
+        }
+    }
+
+    if let Some(cli_port) = cli.port {
+        if cli_port != port {
+            warn!("--port ({cli_port}) overrides current port ({port})");
+        }
+        port = cli_port;
+    }
+
     let addr = format!("0.0.0.0:{port}");
 
     info!("{}", "=".repeat(50));

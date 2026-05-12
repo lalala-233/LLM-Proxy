@@ -10,4 +10,9 @@ pub struct Cli {
     /// Path to the JSON configuration file
     #[arg(short = 'c', long = "config", default_value = "config.json")]
     pub config: String,
+
+    /// Port to listen on (overrides config and PORT env var)
+    /// priority: CLI > PORT env > config
+    #[arg(short = 'p', long = "port")]
+    pub port: Option<u16>,
 }
