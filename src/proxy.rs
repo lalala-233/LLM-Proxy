@@ -1,5 +1,4 @@
-use crate::config::{ALLOWED_MODELS, TIMEOUT_SECS, UPSTREAM_URL};
-use crate::error::ProxyError;
+use crate::{config::Config, error::ProxyError};
 use axum::{
     Router,
     extract::State,
@@ -11,7 +10,10 @@ use futures_util::StreamExt;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::{Value, json};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    sync::Arc,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 use tracing::{error, info};
 
 // ---------------------------------------------------------------------------
@@ -21,6 +23,7 @@ use tracing::{error, info};
 #[derive(Clone)]
 pub struct AppState {
     pub client: Client,
+    pub config: Config,
 }
 
 // ---------------------------------------------------------------------------
@@ -69,7 +72,7 @@ fn now() -> u64 {
 // ---------------------------------------------------------------------------
 
 async fn handle_chat_completions(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(body): Json<Value>,
 ) -> Result<Response, ProxyError> {
@@ -77,10 +80,16 @@ async fn handle_chat_completions(
         .get("model")
         .and_then(|v| v.as_str())
         .map(std::string::ToString::to_string)
-        .ok_or_else(|| ProxyError::ModelNotAllowed("(missing)".to_string()))?;
+        .ok_or_else(|| ProxyError::ModelNotAllowed {
+            model: "(missing)".to_string(),
+            allowed: state.config.allowed_models.clone(),
+        })?;
 
-    if !ALLOWED_MODELS.contains(&model.as_str()) {
-        return Err(ProxyError::ModelNotAllowed(model));
+    if !state.config.allowed_models.contains(&model) {
+        return Err(ProxyError::ModelNotAllowed {
+            model,
+            allowed: state.config.allowed_models.clone(),
+        });
     }
 
     let auth_header = headers
@@ -115,10 +124,10 @@ async fn handle_chat_completions(
 
     let response = state
         .client
-        .post(UPSTREAM_URL)
+        .post(&state.config.upstream)
         .headers(headers)
         .json(&upstream_payload)
-        .timeout(Duration::from_secs(TIMEOUT_SECS))
+        .timeout(Duration::from_secs(state.config.timeout))
         .send()
         .await
         .map_err(|e| {
@@ -261,15 +270,14 @@ async fn collect_and_return(
     Ok(Json(final_response).into_response())
 }
 
-async fn handle_models() -> Json<Value> {
-    let ts = now();
+async fn handle_models(State(state): State<Arc<AppState>>) -> Json<Value> {
     Json(json!({
         "object": "list",
-        "data": ALLOWED_MODELS.iter().map(|id| {
+        "data": state.config.allowed_models.iter().map(|id| {
             json!({
                 "id": id,
                 "object": "model",
-                "created": ts,
+                "created": now(),
                 "owned_by": "llm-proxy",
             })
         }).collect::<Vec<_>>()
@@ -284,5 +292,5 @@ pub fn create_router(state: AppState) -> Router {
     Router::new()
         .route("/v1/chat/completions", post(handle_chat_completions))
         .route("/v1/models", get(handle_models))
-        .with_state(state)
+        .with_state(Arc::new(state))
 }
