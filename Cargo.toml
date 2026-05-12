@@ -2,6 +2,11 @@
 name = "llm-proxy"
 version = "0.1.3"
 edition = "2024"
+description = "An OpenAI-compatible proxy that sits between your client and an upstream LLM API"
+homepage = "https://github.com/lalala-233/LLM-Proxy"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/lalala-233/LLM-Proxy"
 
 [dependencies]
 axum = { version = "0.8", default-features = false, features = [
