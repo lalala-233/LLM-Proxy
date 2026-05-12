@@ -1,10 +1,8 @@
-# LLM Proxy (Python)
+# LLM Proxy (Rust)
 
-[English](./README.py.md) | [Rust 版本](./README_ZH_CN.md)
+[English](./README.md) | [Python 版本](./README_ZH_CN.py.md)
 
-> 这是 **Python 实现**。另有 [Rust 版本](./README_ZH_CN.md)，性能更优，支持命令行参数和 JSON 配置文件。
-
-一个 OpenAI 兼容的代理服务器，位于客户端与上游 LLM API（默认是 SiliconFlow）之间。
+一个 OpenAI 兼容的代理服务器，位于客户端与上游 LLM API（默认是 SiliconFlow）之间。这是 **Rust 实现**——作为 [Python 版本](./README_ZH_CN.py.md)的编译型高性能替代方案。
 
 可搭配[沉浸式翻译](https://www.immersivetranslate.net/)使用。
 
@@ -14,23 +12,43 @@
 - **API Key**: 您的上游 API Key
 - **Model**: 白名单中的任一模型（如 `THUDM/GLM-4-9B-0414`）
 
+## 与 Python 版本的区别
+
+| | Rust | Python |
+| :-: | - | - |
+| 运行环境 | 编译为单个二进制文件 | 需要 Python + pip |
+| 命令行 | `--config`/`-c`, `--port`/`-p` | 仅环境变量 |
+| 配置方式 | JSON 配置文件（`config.json`） | 直接编辑 `proxy.py` |
+| 端口优先级 | `--port` > `PORT` 环境变量 > config > 8000 | `PORT` 环境变量 > 8000 |
+| 架构 | 异步（tokio + axum） | 异步（aiohttp） |
+
+Rust 版本可直接替换 Python 版本：除启动方式和配置机制外，API 端点与行为完全一致。
+
 ## 为什么要使用 LLM Proxy
 
 默认情况下，沉浸式翻译对上游发出的请求不是流式的，也不能指定思考是否开启，这对于一些模型来说增大了延迟。
 
 LLM Proxy **强制上游使用** `stream=true` 和 `enable_thinking=false`，使翻译响应更快。
 
+## 从源码安装
+
+```bash
+git clone https://github.com/lalala-233/LLM-Proxy
+cd LLM-Proxy
+cargo install --path .
+```
+
 ## 快速开始
 
 ```bash
-# 安装依赖
-pip install aiohttp
-
 # 启动代理（默认端口 8000）
-python proxy.py
+llm-proxy
 
 # 自定义端口
-PORT=8080 python proxy.py
+llm-proxy --port 8080
+
+# 或使用环境变量
+PORT=8080 llm-proxy
 ```
 
 代理暴露两个端点：
@@ -75,26 +93,46 @@ PORT=8080 python proxy.py
 
 ## 配置
 
-打开 `proxy.py`，找到靠近文件顶部的 **Configuration** 区域：
+代理会从当前工作目录读取 `config.json`。若文件不存在，则使用默认值。
 
-```python
-# =============================================
-# Configuration — edit these to fit your setup
-# =============================================
-UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
-ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
-TIMEOUT = 60
+```json
+{
+    "upstream": "https://api.siliconflow.cn/v1/chat/completions",
+    "allowed_models": ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"],
+    "timeout": 60,
+    "port": 8000
+}
 ```
 
-> **注意：**`enable_thinking` 是 SiliconFlow 的特有参数。本代理主要为 SiliconFlow 设计。若将 `UPSTREAM_URL` 改为其他提供商，请先确认对方是否支持（或会忽略）该字段——否则需从 `proxy.py` 的 `build_upstream_body()` 中移除它。
+所有字段均为可选，缺失字段会回退到上方列出的默认值。
 
-修改 `UPSTREAM_URL` 指向任意 OpenAI 兼容的 API。修改 `ALLOWED_MODELS` 来限制代理接受的模型名称。
+> **注意：**`enable_thinking` 是 SiliconFlow 的特有参数。本代理主要为 SiliconFlow 设计。若将 `upstream` 改为其他提供商，请先确认对方是否支持（或会忽略）该字段——否则需从 `src/proxy.rs` 的 `build_upstream_body()` 中移除它。
 
-代理默认监听 `8000` 端口，可通过 `PORT` 环境变量覆盖：
+修改 `upstream` 指向任意 OpenAI 兼容的 API。修改 `allowed_models` 来限制代理接受的模型名称。
+
+代理默认监听 `8000` 端口，也可通过 `PORT` 环境变量覆盖
+
+### 端口解析
+
+监听端口按以下优先级确定：
+
+1. `--port` / `-p` 命令行参数
+2. `PORT` 环境变量
+3. `config.json` 中的 `port` 字段
+4. 默认值：`8000`
+
+当多个来源指定不同值时，会输出警告。
+
+### CLI 参考
 
 ```bash
-PORT=9090 python proxy.py
+llm-proxy --help
 ```
+
+| 参数 | 说明 | 默认值 |
+| :-: | :-: | :-: |
+| `-c`, `--config` | 配置文件路径 | `config.json` |
+| `-p`, `--port` | 监听端口 | 无 |
 
 ## 延迟对比工具
 
