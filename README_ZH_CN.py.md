@@ -1,6 +1,8 @@
-# LLM Proxy
+# LLM Proxy (Python)
 
-[English](./README.md)
+[English](./README.py.md) | [Rust 版本](./README_ZH_CN.md)
+
+> 这是 **Python 实现**。另有 [Rust 版本](./README_ZH_CN.md)，性能更优，支持命令行参数和 JSON 配置文件。
 
 一个 OpenAI 兼容的代理服务器，位于客户端与上游 LLM API（默认是 SiliconFlow）之间。
 
@@ -16,7 +18,7 @@
 
 默认情况下，沉浸式翻译对上游发出的请求不是流式的，也不能指定思考是否开启，这对于一些模型来说增大了延迟。
 
-LLM Proxy **强制上游使用** `stream=false` 和 `enable_thinking=false`，使翻译响应更快。
+LLM Proxy **强制上游使用** `stream=true` 和 `enable_thinking=false`，使翻译响应更快。
 
 ## 快速开始
 
@@ -64,7 +66,7 @@ PORT=8080 python proxy.py
 
 **主效应分析：**
 
-- `enable_thinking=false` -> **均值 8.18s**，`enable_thinking=true` -> **均值 14.05s** — **开启思考带来约 5.9s 惩罚**。
+- `enable_thinking=false` -> **均值 8.18s**，`enable_thinking=true` -> **均值 14.05s** — **开启思考带来约 5.9s 延迟惩罚**。
 - `stream=true` -> **均值 10.99s**，`stream=false` -> **均值 11.24s**，差异可忽略。
 
 关闭思考可以减少近 40% 的延迟。

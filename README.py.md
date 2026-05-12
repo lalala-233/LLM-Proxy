@@ -1,6 +1,8 @@
-# LLM Proxy
+# LLM Proxy (Python)
 
-[中文版](./README_ZH_CN.md)
+[中文版](./README_ZH_CN.py.md) | [Rust version](./README.md)
+
+> This is the **Python implementation**. A [Rust version](./README.md) with better performance, CLI support, and JSON configuration is also available.
 
 An OpenAI-compatible proxy server that sits between your client and an upstream LLM API (default: SiliconFlow).
 
