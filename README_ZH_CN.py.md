@@ -30,6 +30,9 @@ pip install aiohttp
 python proxy.py
 
 # 自定义端口
+python proxy.py --port 8080
+
+# 或使用环境变量
 PORT=8080 python proxy.py
 ```
 
@@ -75,26 +78,44 @@ PORT=8080 python proxy.py
 
 ## 配置
 
-打开 `proxy.py`，找到靠近文件顶部的 **Configuration** 区域：
+代理会从当前工作目录读取 `config.json`。若文件不存在，则使用默认值。
 
-```python
-# =============================================
-# Configuration — edit these to fit your setup
-# =============================================
-UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
-ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
-TIMEOUT = 60
+```json
+{
+    "upstream": "https://api.siliconflow.cn/v1/chat/completions",
+    "allowed_models": ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"],
+    "timeout": 60,
+    "port": 8000
+}
 ```
 
-> **注意：**`enable_thinking` 是 SiliconFlow 的特有参数。本代理主要为 SiliconFlow 设计。若将 `UPSTREAM_URL` 改为其他提供商，请先确认对方是否支持（或会忽略）该字段——否则需从 `proxy.py` 的 `build_upstream_body()` 中移除它。
+所有字段均为可选，缺失字段会回退到上方列出的默认值。
 
-修改 `UPSTREAM_URL` 指向任意 OpenAI 兼容的 API。修改 `ALLOWED_MODELS` 来限制代理接受的模型名称。
+> **注意：**`enable_thinking` 是 SiliconFlow 的特有参数。本代理主要为 SiliconFlow 设计。若将 `upstream` 改为其他提供商，请先确认对方是否支持（或会忽略）该字段——否则需从 `proxy.py` 的 `build_upstream_body()` 中移除它。
 
-代理默认监听 `8000` 端口，可通过 `PORT` 环境变量覆盖：
+修改 `upstream` 指向任意 OpenAI 兼容的 API。修改 `allowed_models` 来限制代理接受的模型名称。
+
+### 端口解析
+
+监听端口按以下优先级确定：
+
+1. `--port` / `-p` 命令行参数
+2. `PORT` 环境变量
+3. `config.json` 中的 `port` 字段
+4. 默认值：`8000`
+
+当多个来源指定不同值时，会输出警告。
+
+### CLI 参考
 
 ```bash
-PORT=9090 python proxy.py
+python proxy.py --help
 ```
+
+| 参数 | 说明 | 默认值 |
+| :-: | :-: | :-: |
+| `-c`, `--config` | 配置文件路径 | `config.json` |
+| `-p`, `--port` | 监听端口 | 无 |
 
 ## 延迟对比工具
 

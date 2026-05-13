@@ -17,7 +17,7 @@
 | | Rust | Python |
 | :-: | - | - |
 | 运行环境 | 编译为单个二进制文件 | 需要 Python |
-| 配置方式 | JSON 配置文件（`config.json`） | 直接编辑 `proxy.py` 或 JSON 配置文件 |
+| 配置方式 | JSON 配置文件（`config.json`） | JSON 配置文件或直接编辑 `proxy.py`（不推荐） |
 | 命令行 | `--config`/`-c`、`--port`/`-p` | 与 Rust 版本一致 |
 | 端口优先级 | `--port` > `PORT` 环境变量 > config > 8000（默认） | 与 Rust 版本一致 |
 | 架构 | 异步（tokio + axum） | 异步（aiohttp） |
@@ -109,8 +109,6 @@ PORT=8080 llm-proxy
 > **注意：**`enable_thinking` 是 SiliconFlow 的特有参数。本代理主要为 SiliconFlow 设计。若将 `upstream` 改为其他提供商，请先确认对方是否支持（或会忽略）该字段——否则需从 `src/proxy.rs` 的 `build_upstream_body()` 中移除它。
 
 修改 `upstream` 指向任意 OpenAI 兼容的 API。修改 `allowed_models` 来限制代理接受的模型名称。
-
-代理默认监听 `8000` 端口，也可通过 `PORT` 环境变量覆盖
 
 ### 端口解析
 

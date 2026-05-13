@@ -29,7 +29,10 @@ pip install aiohttp
 # Start the proxy (default port 8000)
 python proxy.py
 
-# Or with a custom port
+# With a custom port
+python proxy.py --port 8080
+
+# Or use environment variable
 PORT=8080 python proxy.py
 ```
 
@@ -75,26 +78,44 @@ Disabling thinking cuts latency by nearly 40%.
 
 ## Configuration
 
-Open `proxy.py` and look for the **Configuration** section near the top:
+The proxy reads `config.json` from the current working directory. If the file is missing, built-in defaults are used.
 
-```python
-# =============================================
-# Configuration — edit these to fit your setup
-# =============================================
-UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
-ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
-TIMEOUT = 60
+```json
+{
+    "upstream": "https://api.siliconflow.cn/v1/chat/completions",
+    "allowed_models": ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"],
+    "timeout": 60,
+    "port": 8000
+}
 ```
 
-> **Note:** `enable_thinking` is a SiliconFlow-specific parameter. This proxy was designed primarily for SiliconFlow. If you change `UPSTREAM_URL` to another provider, check whether it supports (or ignores) this field — otherwise remove it from `build_upstream_body()` in `proxy.py`.
+All fields are optional — omitted fields fall back to their defaults shown above.
 
-Change `UPSTREAM_URL` to point at any OpenAI-compatible API. Update `ALLOWED_MODELS` to restrict which model names the proxy accepts.
+> **Note:** `enable_thinking` is a SiliconFlow-specific parameter. This proxy was designed primarily for SiliconFlow. If you change `upstream` to another provider, check whether it supports (or ignores) this field — otherwise remove it from `build_upstream_body()` in `proxy.py`.
 
-The proxy listens on port `8000` by default. Override with the `PORT` environment variable:
+Change `upstream` to point at any OpenAI-compatible API. Update `ALLOWED_MODELS` to restrict which model names the proxy accepts.
+
+### Port resolution
+
+The listening port is determined in this order (first match wins):
+
+1. `--port` / `-p` CLI flag
+2. `PORT` environment variable
+3. `port` field in `config.json`
+4. Default: `8000`
+
+When multiple sources specify different values, a warning is logged.
+
+### CLI reference
 
 ```bash
-PORT=9090 python proxy.py
+llm-proxy --help
 ```
+
+| Flag | Description | Default |
+| :-: | :-: | :-: |
+| `-c`, `--config` | Path to config file | `config.json` |
+| `-p`, `--port` | Listening port | None |
 
 ## Latency Comparison Tool
 

@@ -17,7 +17,7 @@ Immersive Translate supports custom OpenAI-compatible APIs. Configure it to use 
 | | Rust | Python |
 | - | - | - |
 | Runtime | Compiled binary | Requires Python |
-| Config | JSON file (`config.json`) | Edit `proxy.py` directly or JSON file |
+| Config | JSON file (`config.json`) | JSON file or Edit `proxy.py` directly (not recommended) |
 | CLI | `--config`/`-c`, `--port`/`-p` | Same |
 | Port priority | `--port` > `PORT` env > config > 8000 (default) | Same |
 | Architecture | Async (tokio + axum) | Async (aiohttp) |
@@ -109,8 +109,6 @@ All fields are optional — omitted fields fall back to their defaults shown abo
 > **Note:** `enable_thinking` is a SiliconFlow-specific parameter. This proxy was designed primarily for SiliconFlow. If you change `upstream` to another provider, check whether it supports (or ignores) this field — otherwise remove it from `build_upstream_body()` in `src/proxy.rs`.
 
 Change `upstream` to point at any OpenAI-compatible API. Update `allowed_models` to restrict which model names the proxy accepts.
-
-The proxy listens on port `8000` by default. Override with the `PORT` environment variable:
 
 ### Port resolution
 
