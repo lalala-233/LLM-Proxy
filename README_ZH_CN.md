@@ -16,13 +16,13 @@
 
 | | Rust | Python |
 | :-: | - | - |
-| 运行环境 | 编译为单个二进制文件 | 需要 Python + pip |
-| 命令行 | `--config`/`-c`, `--port`/`-p` | 仅环境变量 |
-| 配置方式 | JSON 配置文件（`config.json`） | 直接编辑 `proxy.py` |
-| 端口优先级 | `--port` > `PORT` 环境变量 > config > 8000 | `PORT` 环境变量 > 8000 |
+| 运行环境 | 编译为单个二进制文件 | 需要 Python |
+| 配置方式 | JSON 配置文件（`config.json`） | 直接编辑 `proxy.py` 或 JSON 配置文件 |
+| 命令行 | `--config`/`-c`、`--port`/`-p` | 与 Rust 版本一致 |
+| 端口优先级 | `--port` > `PORT` 环境变量 > config > 8000（默认） | 与 Rust 版本一致 |
 | 架构 | 异步（tokio + axum） | 异步（aiohttp） |
 
-Rust 版本可直接替换 Python 版本：除启动方式和配置机制外，API 端点与行为完全一致。
+Rust 版本可直接替换 Python 版本，除启动方式与日志外，API 与行为完全一致。
 
 ## 为什么要使用 LLM Proxy
 

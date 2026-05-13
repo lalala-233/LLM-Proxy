@@ -16,13 +16,13 @@ Immersive Translate supports custom OpenAI-compatible APIs. Configure it to use 
 
 | | Rust | Python |
 | - | - | - |
-| Runtime | Compiled binary | Requires Python + pip |
-| CLI | `--config`/`-c`, `--port`/`-p` | Env vars only |
-| Config | JSON file (`config.json`) | Edit `proxy.py` directly |
-| Port priority | `--port` > `PORT` env > config > 8000 | `PORT` env > 8000 |
+| Runtime | Compiled binary | Requires Python |
+| Config | JSON file (`config.json`) | Edit `proxy.py` directly or JSON file |
+| CLI | `--config`/`-c`, `--port`/`-p` | Same |
+| Port priority | `--port` > `PORT` env > config > 8000 (default) | Same |
 | Architecture | Async (tokio + axum) | Async (aiohttp) |
 
-The Rust version is a drop-in replacement: the API endpoints and behaviour are identical except for the startup and configuration mechanisms.
+The Rust version is a drop-in replacement: the API endpoints and behaviour are identical except for the startup and logging mechanisms.
 
 ## Why LLM Proxy
 
