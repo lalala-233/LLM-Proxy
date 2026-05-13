@@ -17,6 +17,7 @@ Why force stream=true + enable_thinking=false?
     while still being able to emulate non-streaming responses.
 """
 
+import argparse
 import json
 import logging
 import os
@@ -29,22 +30,50 @@ from aiohttp import web
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s.%(msecs)03d  %(levelname)s  %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
 # =============================================
-# Configuration — edit these to fit your setup
+# Default configuration (used when config.json is missing or a field is omitted)
 # =============================================
-UPSTREAM_URL = "https://api.siliconflow.cn/v1/chat/completions"
-ALLOWED_MODELS = ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"]
-TIMEOUT = 60
+DEFAULTS = {
+    "upstream": "https://api.siliconflow.cn/v1/chat/completions",
+    "allowed_models": ["Qwen/Qwen3-8B", "THUDM/GLM-4-9B-0414"],
+    "timeout": 60,
+    "port": 8000,
+}
 
 
-def build_upstream_body(body: dict) -> dict:
+def load_config(path: str) -> dict:
+    """Load configuration from a JSON file.
+
+    If the file does not exist or is invalid, built-in defaults are used.
+    Missing fields fall back to their defaults.
+    """
+    if not os.path.isfile(path):
+        logger.info(f"Config file '{path}' not found — using defaults.")
+        return DEFAULTS.copy()
+
+    try:
+        with open(path) as f:
+            file_config = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning(f"Failed to parse '{path}': {e} — using defaults.")
+        return DEFAULTS.copy()
+
+    # Merge: file values override defaults
+    merged = DEFAULTS | file_config
+    logger.info(f"Loaded config from '{path}'")
+    return merged
+
+
+def build_upstream_body(body: dict, allowed_models: list) -> dict:
     """Build the upstream request body with forced parameters."""
+    default_model = allowed_models[0] if allowed_models else ""
     upstream = {
-        "model": body.get("model", ALLOWED_MODELS[0]),
+        "model": body.get("model", default_model),
         "messages": body.get("messages", []),
         "stream": True,
         "enable_thinking": False,
@@ -75,10 +104,13 @@ async def handle_chat_completions(
     except json.JSONDecodeError:
         return web.json_response({"error": "Invalid JSON"}, status=400)
 
+    config = request.app["config"]
+
     # Validate model against allowlist
+    allowed_models = config["allowed_models"]
     model = body.get("model", "")
-    if model not in ALLOWED_MODELS:
-        allowed_str = ", ".join(ALLOWED_MODELS)
+    if model not in allowed_models:
+        allowed_str = ", ".join(allowed_models)
         return web.json_response(
             {"error": f"Model '{model}' not allowed. Allowed: {allowed_str}"},
             status=400,
@@ -94,7 +126,7 @@ async def handle_chat_completions(
 
     client_wants_stream = body.get("stream", False)
 
-    upstream_payload = build_upstream_body(body)
+    upstream_payload = build_upstream_body(body, allowed_models)
 
     headers = {
         "Content-Type": "application/json",
@@ -109,10 +141,10 @@ async def handle_chat_completions(
 
     try:
         async with aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=TIMEOUT),
+            timeout=aiohttp.ClientTimeout(total=config["timeout"]),
         ) as session:
             async with session.post(
-                UPSTREAM_URL,
+                config["upstream"],
                 headers=headers,
                 json=upstream_payload,
             ) as resp:
@@ -240,6 +272,7 @@ async def collect_and_return(
 
 async def handle_models(request: web.Request) -> web.Response:
     """OpenAI-compatible model list endpoint."""
+    allowed_models = request.app["config"]["allowed_models"]
     return web.json_response(
         {
             "object": "list",
@@ -250,14 +283,15 @@ async def handle_models(request: web.Request) -> web.Response:
                     "created": int(time.time()),
                     "owned_by": "llm-proxy",
                 }
-                for model_id in ALLOWED_MODELS
+                for model_id in allowed_models
             ],
         }
     )
 
 
-def create_app() -> web.Application:
+def create_app(config: dict) -> web.Application:
     app = web.Application()
+    app["config"] = config
 
     app.router.add_post("/v1/chat/completions", handle_chat_completions)
     app.router.add_get("/v1/models", handle_models)
@@ -266,10 +300,53 @@ def create_app() -> web.Application:
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", "8000"))
+    parser = argparse.ArgumentParser(
+        description="LLM Proxy — OpenAI-compatible proxy server",
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        default="config.json",
+        help="Path to JSON configuration file (default: config.json)",
+    )
+    parser.add_argument(
+        "-p",
+        "--port",
+        type=int,
+        help="Port to listen on (Priority: CLI > PORT env > config > 8000 (default))",
+    )
+    args = parser.parse_args()
+
+    # Load config from file (falls back to defaults if missing/invalid)
+    config = load_config(args.config)
+
+    # priority: CLI > PORT env > config > 8000 (default)
+    port = config.get("port", 8000)
+
+    if env := os.getenv("PORT"):
+        try:
+            new_port = int(env)
+
+            if not (0 <= new_port <= 65535):
+                raise ValueError("port out of range")
+            if new_port != port:
+                logger.warning(
+                    f"PORT env var ({new_port}) overrides config port ({port})"
+                )
+                port = new_port
+        except ValueError:
+            logger.warning(f"PORT env var '{env}' is not a valid port number, ignoring")
+
+    if args.port is not None and args.port != port:
+        logger.warning(f"--port ({args.port}) overrides current port ({port})")
+        port = args.port
+
+    # Store resolved port back into config for logging consistency
+    config["port"] = port
+
     logger.info("=" * 50)
     logger.info(f"LLM Proxy starting:   http://localhost:{port}")
-    logger.info(f"Allowed models:       {', '.join(ALLOWED_MODELS)}")
-    logger.info(f"Upstream URL:         {UPSTREAM_URL}")
+    logger.info(f"Allowed models:       {', '.join(config['allowed_models'])}")
+    logger.info(f"Upstream URL:         {config['upstream']}")
     logger.info("=" * 50)
-    web.run_app(create_app(), host="0.0.0.0", port=port)
+    web.run_app(create_app(config), host="0.0.0.0", port=port, print=None)
