@@ -40,7 +40,7 @@ async fn main() {
 
     let state = AppState { client, config };
 
-    // priority: CLI > PORT env > config
+    // priority: CLI > PORT env > config > 8000 (default)
     let mut port = state.config.port;
 
     if let Ok(env_str) = std::env::var("PORT") {

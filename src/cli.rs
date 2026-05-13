@@ -12,7 +12,8 @@ pub struct Cli {
     pub config: String,
 
     /// Port to listen on (overrides config and PORT env var)
-    /// priority: CLI > PORT env > config
+    ///
+    /// Priority: CLI > PORT env > config > 8000 (default)
     #[arg(short = 'p', long = "port")]
     pub port: Option<u16>,
 }
