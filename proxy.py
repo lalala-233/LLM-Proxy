@@ -301,7 +301,8 @@ def create_app(config: dict) -> web.Application:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="LLM Proxy — OpenAI-compatible proxy server",
+        description="LLM Proxy - OpenAI-compatible proxy server that sits between your client and an upstream LLM API.\n\nBy default, the proxy looks for `config.json` in the current working directory.\n\nIf the file is missing, built-in defaults are used (SiliconFlow upstream, port 8000).",
+        formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
         "-c",
