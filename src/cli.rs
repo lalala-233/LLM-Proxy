@@ -3,7 +3,7 @@ use clap::Parser;
 /// LLM Proxy - OpenAI-compatible proxy server that sits between your client and an upstream LLM API.
 ///
 /// By default, the proxy looks for `config.json` in the current working directory.
-/// 
+///
 /// If the file is missing, built-in defaults are used (SiliconFlow upstream, port 8000).
 #[derive(Parser)]
 #[command(name = "llm-proxy", version, about)]
