@@ -1,7 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Json, Response};
 use serde_json::json;
-
 /// Unified error type for the LLM Proxy.
 ///
 /// Each variant maps to an appropriate HTTP status code and error message.

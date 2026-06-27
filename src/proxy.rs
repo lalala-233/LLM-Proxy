@@ -1,4 +1,4 @@
-use crate::{config::Config, error::ProxyError};
+use crate::{config::Config, error::proxy::ProxyError};
 use axum::{
     Router,
     extract::State,

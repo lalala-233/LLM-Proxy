@@ -1,7 +1,5 @@
+use crate::error::config::ConfigError;
 use serde::Deserialize;
-use std::fmt;
-use thiserror::Error;
-
 // ---------------------------------------------------------------------------
 // Default values — used when config.json is missing or a field is omitted
 // ---------------------------------------------------------------------------
@@ -47,22 +45,6 @@ pub struct Config {
 // ---------------------------------------------------------------------------
 // Config loading
 // ---------------------------------------------------------------------------
-
-/// Error when loading or parsing configuration.
-#[derive(Debug, Error)]
-pub enum ConfigError {
-    Io(#[from] std::io::Error),
-    Parse(#[from] serde_json::Error),
-}
-
-impl fmt::Display for ConfigError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Io(e) => write!(f, "Failed to read config file: {e}"),
-            Self::Parse(e) => write!(f, "Invalid config JSON: {e}"),
-        }
-    }
-}
 
 impl Config {
     /// Load configuration from a JSON file.
