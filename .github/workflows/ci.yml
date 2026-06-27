@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          submodules: recursive
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -30,7 +32,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
-          
+
       - name: Build release
         run: cargo build --release --locked
 
@@ -45,4 +47,3 @@ jobs:
 
       - name: Clippy lint
         run: cargo clippy --release --locked --all-features --all-targets -- -D warnings
-        
