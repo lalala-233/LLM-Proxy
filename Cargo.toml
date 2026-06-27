@@ -34,3 +34,7 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
     "fmt",
 ] }
+
+[profile.release]
+incremental = true
+strip = true
